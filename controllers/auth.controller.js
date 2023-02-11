@@ -24,15 +24,23 @@ const sendEmail = async (to, from, subject, data, urlPathFile) => {
   let template = handlebars.compile(readFile.toString());
   let text = template(data);
 
-  const msg = {
+  const mailOptionsSendGrid = {
     to,
     from,
     subject,
     text
   };
 
+  // I used alternatif nodemailer because my account SendGrid temporary has been suspense
+  const mailOptionsNodeMailer = {
+    to: to,
+    subject: subject,
+    html: text,
+  };
+
   try {
-    await sgMail.send(msg);
+    await sgMail.send(mailOptionsSendGrid); // sendGrid
+    await email.send(mailOptionsNodeMailer); // nodemailer
   } catch (error) {
     console.error(error);
   }
@@ -43,7 +51,6 @@ const changePassword = async (req, res) => {
     const { email, oldPassword, password } = req.body;
 
     const oldUser = await authModel.signIn(email);
-    console.log("oldUser", oldUser);
 
     if (!oldUser)
       return helper.successHelper(req, res, 400, {
@@ -74,7 +81,6 @@ const changePassword = async (req, res) => {
   }
 };
 
-
 const resetPassword = async (req, res) => {
   try {
     const mail = req.body.email;
@@ -83,20 +89,16 @@ const resetPassword = async (req, res) => {
     if (!user) {
       throw new Error("USER_NOT_FOUND");
     }
-
     const timestamp = new Date().getTime().toString();
     const hash = crypto.createHash("md5").update(timestamp).digest("hex");
     const hashEmail = crypto.createHash("md5").update(mail).digest("hex");
     const code = hash + hashEmail + generateRandomString(5, true);
 
-
     const resetPasswordLink = `${frontendUrl}/newPassword/${code}`;
-
     let data = {
       name: user.usr_name,
       resetPasswordLink: resetPasswordLink,
     };
-
     await sendEmail(user.usr_email, emailTesting, 'Reset Password AVL', data, "../template/recoverAccountProcess.hbs");
 
     const payload = {
@@ -240,7 +242,7 @@ const signin = async (req, res) => {
     await authModel.sessionChange("Active", email)
 
     const checkUserHistory = await authModel.checkUserHistory(email);
-    let totalLogin = checkUserHistory.usrh_total_login;
+    let totalLogin = checkUserHistory?.usrh_total_login;
 
     await authModel.signInHistory(
       {
