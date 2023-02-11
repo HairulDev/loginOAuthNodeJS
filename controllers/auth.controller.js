@@ -17,19 +17,19 @@ const { generateRandomString } = require("#services/auth.service");
 const sgMail = require("@sendgrid/mail");
 
 const sendEmail = async (to, from, subject, data, urlPathFile) => {
-  await sgMail.setApiKey(sendGridAPIKey);
+  // await sgMail.setApiKey(sendGridAPIKey);
 
   let pathFile = path.join(__dirname, urlPathFile);
   let readFile = fs.readFileSync(pathFile);
   let template = handlebars.compile(readFile.toString());
   let text = template(data);
 
-  const mailOptionsSendGrid = {
-    to,
-    from,
-    subject,
-    text
-  };
+  // const mailOptionsSendGrid = {
+  //   to,
+  //   from,
+  //   subject,
+  //   text
+  // };
 
   // I used alternatif nodemailer because my account SendGrid temporary has been suspense
   const mailOptionsNodeMailer = {
@@ -39,7 +39,7 @@ const sendEmail = async (to, from, subject, data, urlPathFile) => {
   };
 
   try {
-    await sgMail.send(mailOptionsSendGrid); // sendGrid
+    // await sgMail.send(mailOptionsSendGrid); // sendGrid
     await email.send(mailOptionsNodeMailer); // nodemailer
   } catch (error) {
     console.error(error);
@@ -148,7 +148,7 @@ const createNewPassword = async (req, res) => {
       );
     }
 
-    if (userByToken.IS_EXPIRED || userByToken.IS_USED) {
+    if (userByToken.is_expired || userByToken.is_used) {
       return helper.errorHelper(
         req,
         res,
@@ -161,7 +161,7 @@ const createNewPassword = async (req, res) => {
       );
     } else {
       const resetPasswordAge =
-        Math.abs(new Date() - new Date(userByToken.TIMECREATED)) / 86400000; // in days
+        Math.abs(new Date() - new Date(userByToken.timecreated)) / 86400000; // in days
       if (resetPasswordAge > 30) {
         const params = {
           is_expired: 1,
@@ -182,7 +182,7 @@ const createNewPassword = async (req, res) => {
     }
 
     const hashedPassword = authService.generatePassword(password);
-    const user = await authModel.changePassword(userByToken.EMAIL, {
+    const user = await authModel.changePassword(userByToken.email, {
       usr_password: hashedPassword,
       usr_timeupdated: new Date().toISOString(),
     });
@@ -197,7 +197,7 @@ const createNewPassword = async (req, res) => {
       name: user[0]?.usr_name,
       date: new Date().toLocaleString()
     };
-    await sendEmail(userByToken.EMAIL, emailTesting, 'Create New Password AVL', data, "../template/recoverAccountSuccess.hbs");
+    await sendEmail(userByToken.email, emailTesting, 'Create New Password AVL', data, "../template/recoverAccountSuccess.hbs");
 
 
     return helper.successHelper(req, res, 200, {
