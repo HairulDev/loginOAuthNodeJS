@@ -91,7 +91,6 @@ const checkUserHistory = (params) => {
 const signInHistory = (params) => {
   return new Promise(async (resolve, reject) => {
     const { email, signTotal } = params;
-    console.log("signTotal", signTotal);
 
     const select = await knex("user_login_history")
       .select(["*"])

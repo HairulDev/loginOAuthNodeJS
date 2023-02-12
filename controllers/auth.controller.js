@@ -303,8 +303,7 @@ const signup = async (req, res) => {
         success: false,
         message: `Empty Email`,
       });
-    // const oldUser = await User.findOne({ email }); //mongoDB
-    const oldUser = await authModel.signInByToken(email); // mySQL
+    const oldUser = await authModel.signInByToken(email);
 
     if (oldUser)
       return res.status(400).json({ message: "User already exists" });
@@ -340,7 +339,6 @@ const signup = async (req, res) => {
       password: hashedPassword,
       firstName,
       lastName,
-      // file: '',
       file: filenameFormatted,
     };
     const result = await authModel.signUp(params);
@@ -359,7 +357,6 @@ const signup = async (req, res) => {
 
 const verifyReg = async (req, res) => {
   const token = decode(req.query.token);
-  console.log("token==", token);
   try {
     const findUser = await authModel.signInByToken(token.usr_email);
     const emailUser = findUser.usr_email;

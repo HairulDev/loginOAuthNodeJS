@@ -30,9 +30,6 @@ module.exports = auth;
 
 const isLogin = (req, res, next) => {
   if (req.session.user == null || req.session.user == undefined) {
-    req.flash("alertMessage", "Session telah habis silahkan signin kembali!!");
-    req.flash("alertStatus", "danger");
-    res.redirect("/admin/signin");
   } else {
     next();
   }
@@ -40,13 +37,6 @@ const isLogin = (req, res, next) => {
 
 module.exports = isLogin;
 
-/** PROLINE
- * Verify JWT token
- *
- * @param {Object} req
- * @param {Object} res
- * @param {Function} next
- */
 const verifyToken = (req, res, next) => {
   let token = req.headers["x-access-token"] || req.headers["authorization"];
 
@@ -76,13 +66,6 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-/**
- * Verify JWT token
- *
- * @param {Object} req
- * @param {Object} res
- * @param {Function} next
- */
 const verifyApiKey = (req, res, next) => {
   try {
     let token = req.headers["x-api-key"];
