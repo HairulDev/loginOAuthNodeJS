@@ -209,7 +209,6 @@ const createNewPassword = async (req, res) => {
   }
 };
 
-
 const verifySignUp = async (params, token) => {
   const { to } = params;
   const verifyLink = `${frontendUrl}/authVerify/${token}`;
