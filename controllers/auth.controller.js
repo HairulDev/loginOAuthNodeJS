@@ -20,7 +20,7 @@ const sendEmail = async (to, from, subject, data, urlPathFile) => {
   // await sgMail.setApiKey(sendGridAPIKey);
 
   let pathFile = path.join(__dirname, urlPathFile);
-  let readFile = fs.readFile(urlPathFile, "utf-8");
+  let readFile = fs.readFileSync(urlPathFile, "utf-8");
   let template = handlebars.compile(readFile.toString());
   let text = template(data);
 
