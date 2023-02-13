@@ -181,7 +181,7 @@ const signUp = (params) => {
 
 const signInByToken = (param) => {
   return knex("user_login")
-    .select("usr_name", "usr_email", "usr_password", "usr_file")
+    .select("usr_id", "usr_name", "usr_email", "usr_password", "usr_file")
     .where("usr_email", param)
     .first();
 };
