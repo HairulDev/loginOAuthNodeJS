@@ -99,7 +99,7 @@ const resetPassword = async (req, res) => {
       name: user.usr_name,
       resetPasswordLink: resetPasswordLink,
     };
-    await sendEmail(user.usr_email, emailTesting, 'Reset Password AVL', data, "../template/recoverAccountProcess.hbs");
+    await sendEmail(user.usr_email, emailTesting, 'Reset Password AVL', data, "template/recoverAccountProcess.hbs");
 
     const payload = {
       code,
@@ -216,7 +216,7 @@ const verifySignUp = async (params, token) => {
     params: params,
     verifyLink
   };
-  await sendEmail(to, emailTesting, 'Verification Registration', data, "../../../template/verifySignUp.hbs");
+  await sendEmail(to, emailTesting, 'Verification Registration', data, "template/verifySignUp.hbs");
 };
 
 const signin = async (req, res) => {
