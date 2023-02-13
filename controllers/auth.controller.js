@@ -19,7 +19,7 @@ const sgMail = require("@sendgrid/mail");
 const sendEmail = async (to, from, subject, data, urlPathFile) => {
   // await sgMail.setApiKey(sendGridAPIKey);
 
-  let pathFile = path.join(__dirname, "../template/verifySignUp.hbs");
+  let pathFile = path.join(__dirname, `../template/${urlPathFile}`);
   let readFile = fs.readFileSync(pathFile);
   let template = handlebars.compile(readFile.toString());
   let text = template(data);
@@ -99,7 +99,7 @@ const resetPassword = async (req, res) => {
       name: user.usr_name,
       resetPasswordLink: resetPasswordLink,
     };
-    await sendEmail(user.usr_email, emailTesting, 'Reset Password AVL', data, "../template/recoverAccountProcess.hbs");
+    await sendEmail(user.usr_email, emailTesting, 'Reset Password AVL', data, "recoverAccountProcess.hbs");
 
     const payload = {
       code,
@@ -197,7 +197,7 @@ const createNewPassword = async (req, res) => {
       name: user[0]?.usr_name,
       date: new Date().toLocaleString()
     };
-    await sendEmail(userByToken.email, emailTesting, 'Create New Password AVL', data, "../template/recoverAccountSuccess.hbs");
+    await sendEmail(userByToken.email, emailTesting, 'Create New Password AVL', data, "recoverAccountSuccess.hbs");
 
 
     return helper.successHelper(req, res, 200, {
@@ -216,7 +216,7 @@ const verifySignUp = async (params, token) => {
     params: params,
     verifyLink
   };
-  await sendEmail(to, emailTesting, 'Verification Registration', data, "../template/verifySignUp.hbs");
+  await sendEmail(to, emailTesting, 'Verification Registration', data, "verifySignUp.hbs");
 };
 
 const signin = async (req, res) => {
