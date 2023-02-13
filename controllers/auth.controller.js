@@ -41,6 +41,7 @@ const sendEmail = async (to, from, subject, data, urlPathFile) => {
   try {
     // await sgMail.send(mailOptionsSendGrid); // sendGrid
     await email.send(mailOptionsNodeMailer); // nodemailer
+    console.log("email dikirim ke =======", mailOptionsNodeMailer);
   } catch (error) {
     console.error(error);
   }
@@ -374,8 +375,7 @@ const verifyReg = async (req, res) => {
 
 module.exports = {
   changePassword,
-  resetPassword,
-  createNewPassword,
+  resetPassword, createNewPassword,
   verifySignUp,
   signin,
   signOut,
