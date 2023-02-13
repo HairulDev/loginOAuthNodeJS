@@ -216,7 +216,7 @@ const verifySignUp = async (params, token) => {
     params: params,
     verifyLink
   };
-  await sendEmail(to, emailTesting, 'Verification Registration', data, "../template/verifySignUp.hbs");
+  await sendEmail(to, emailTesting, 'Verification Registration', data, "template/verifySignUp.hbs");
 };
 
 const signin = async (req, res) => {
