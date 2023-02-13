@@ -19,10 +19,10 @@ const sgMail = require("@sendgrid/mail");
 const sendEmail = async (to, from, subject, data, urlPathFile) => {
   // await sgMail.setApiKey(sendGridAPIKey);
 
-  let pathFile = path.join(__dirname, urlPathFile);
-  let readFile = fs.readFileSync(pathFile, "utf-8");
+  let pathFile = path.join(__dirname, "../template/verifySignUp.hbs");
+  let readFile = fs.readFileSync(pathFile);
   let template = handlebars.compile(readFile.toString());
-  let text = template(data);
+  let text = template(data);;
 
   // const mailOptionsSendGrid = {
   //   to,
