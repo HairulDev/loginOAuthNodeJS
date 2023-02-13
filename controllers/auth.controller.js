@@ -344,7 +344,7 @@ const signup = async (req, res) => {
     await authModel.signUp(params);
     const result = await authModel.signInByToken(email);
 
-    const userToken = authService.signToken(result, 30);
+    const userToken = await authService.signToken(result, 30);
     await verifySignUp(params, userToken);
 
     return helper.successHelper(req, res, 200, {
