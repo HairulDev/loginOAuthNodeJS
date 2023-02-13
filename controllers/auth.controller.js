@@ -46,6 +46,36 @@ const sendEmail = async (to, from, subject, data, urlPathFile) => {
   }
 };
 
+const uploadAWS = async (file, path) => {
+  let filenameFormatted = "";
+  const extension = file.name.split(".");
+  const ext =
+    extension.length > 1 ? "." + extension[extension.length - 1] : "";
+  filenameFormatted = `${new Date() / 1}${ext}`;
+
+  if (!file)
+    return helper.errorHelper(req, res, 400, {
+      success: false,
+      message: `Empty File`,
+    });
+
+  try {
+    // upload to s3
+    const upload = await s3.put(file.tempFilePath, `${path}/${filenameFormatted}`);
+    if (upload.status == false) {
+      return helper.errorHelper(req, res, 400, {
+        success: false,
+        message: upload.message,
+      });
+    }
+    return { filenameFormatted, upload }
+
+  } catch (error) {
+    console.error(error);
+    return error;
+  }
+};
+
 const changePassword = async (req, res) => {
   try {
     const { email, oldPassword, password } = req.body;
@@ -311,26 +341,9 @@ const signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // aws
-    var filenameFormatted = "";
     const file = req.files.file;
-    const extension = file.name.split(".");
-    const ext =
-      extension.length > 1 ? "." + extension[extension.length - 1] : "";
-    filenameFormatted = `${new Date() / 1}${ext}`;
-
-    if (!file)
-      return helper.errorHelper(req, res, 400, {
-        success: false,
-        message: `Empty File`,
-      });
-    // upload attachment to s3
-    const upload = await s3.put(file.tempFilePath, `user/${filenameFormatted}`);
-    if (upload.status == false) {
-      return helper.errorHelper(req, res, 400, {
-        success: false,
-        message: upload.message,
-      });
-    }
+    const path = "user"
+    const uploadAws = await uploadAWS(file, path)
     // end aws
 
     let params = {
@@ -339,7 +352,7 @@ const signup = async (req, res) => {
       password: hashedPassword,
       firstName,
       lastName,
-      file: filenameFormatted,
+      file: uploadAws?.filenameFormatted,
     };
     await authModel.signUp(params);
     const result = await authModel.signInByToken(email);
