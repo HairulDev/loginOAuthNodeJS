@@ -223,6 +223,7 @@ const signin = async (req, res) => {
   const { email, password } = req.body;
   try {
     const oldUser = await authModel.signIn(email);
+    console.log("oldUser =====", oldUser);
 
     if (!oldUser)
       return helper.successHelper(req, res, 400, {
@@ -247,7 +248,7 @@ const signin = async (req, res) => {
       {
         email: oldUser.email,
         signTotal: totalLogin + 1
-      },);
+      });
 
     const token = jwt.sign(
       {
@@ -340,8 +341,10 @@ const signup = async (req, res) => {
       lastName,
       file: filenameFormatted,
     };
-    const result = await authModel.signUp(params);
-    const newUser = await authModel.signInByToken(result[0].usr_email);
+    await authModel.signUp(params);
+    const result = await authModel.signInByToken(email);
+
+    const newUser = await authModel.signInByToken(result.usr_email);
     const userToken = authService.signToken(newUser, 30);
     await verifySignUp(params, userToken);
 
@@ -372,7 +375,8 @@ const verifyReg = async (req, res) => {
 
 module.exports = {
   changePassword,
-  resetPassword, createNewPassword,
+  resetPassword,
+  createNewPassword,
   verifySignUp,
   signin,
   signOut,
