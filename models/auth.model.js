@@ -17,77 +17,6 @@ const signIn = (param) => {
     .first();
 };
 
-const sessionChange = (actived, params) => {
-  return new Promise(async (resolve, reject) => {
-
-    if (actived === 'Active') {
-      console.log("masuk ke ======= Active");
-      await knex.transaction((trx) => {
-        knex("user_login")
-          .transacting(trx)
-          .where({ usr_email: params })
-          .update(
-            {
-              usr_is_active: true,
-              usr_userupdated: params,
-              usr_timeupdated: dateLocalISOString(),
-            },
-            [
-              "usr_email",
-              "usr_userupdated",
-              "usr_timeupdated",
-            ]
-          )
-          .then(async (response) => {
-            await trx.commit();
-            resolve(response);
-          })
-          .catch((err) => {
-            trx.rollback;
-            reject(err);
-          });
-      }); // end knex
-    } else if (actived === 'Destroy') {
-      console.log("masuk ke ======= Destroy");
-      await knex.transaction((trx) => {
-        knex("user_login")
-          .transacting(trx)
-          .where({ usr_email: params })
-          .update(
-            {
-              usr_is_active: false,
-              usr_userupdated: params,
-              usr_timeupdated: dateLocalISOString(),
-            },
-            [
-              "usr_email",
-              "usr_userupdated",
-              "usr_timeupdated",
-            ]
-          )
-          .then(async (response) => {
-            await trx.commit();
-            resolve(response);
-          })
-          .catch((err) => {
-            trx.rollback;
-            reject(err);
-          });
-      });
-    }
-  });
-};
-
-const checkUserHistory = (params) => {
-  return knex("user_login_history")
-    .select(
-      "usrh_email",
-      "usrh_total_login",
-    )
-    .where("usrh_email", params)
-    .first();
-};
-
 const signInHistory = (params) => {
   return new Promise(async (resolve, reject) => {
     const { email, signTotal } = params;
@@ -179,13 +108,6 @@ const signUp = (params) => {
   });
 };
 
-const signInByToken = (param) => {
-  return knex("user_login")
-    .select("usr_id", "usr_name", "usr_email", "usr_password", "usr_file")
-    .where("usr_email", param)
-    .first();
-};
-
 const activeUser = async (email) => {
   return new Promise(async (resolve, reject) => {
     await knex.transaction((trx) => {
@@ -233,10 +155,8 @@ const updateResetPassword = (code, params) => {
 
 module.exports = {
   signIn,
-  sessionChange,
-  checkUserHistory,
   signInHistory,
   signUp,
   activeUser,
-  signInByToken, changePassword, resetPassword, getResetPasswordCode, updateResetPassword,
+  changePassword, resetPassword, getResetPasswordCode, updateResetPassword,
 };

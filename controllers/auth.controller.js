@@ -2,79 +2,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const helper = require("#lib/response");
 const authModel = require("#models/auth.model");
+const genFuncModel = require("#models/genFunc.model");
+const genFuncController = require("#controllers/genFunc.controller");
 const secret = "test";
-const { frontendUrl, roleIdUser, emailTesting, sendGridAPIKey } = require("#config/vars");
-const { email } = require("#lib/index");
-const handlebars = require("handlebars");
-const path = require("path");
-const fs = require("fs");
-const s3 = require("#lib/s3");
+const { frontendUrl, roleIdUser, emailTesting } = require("#config/vars");
 const authService = require("#services/auth.service");
 const decode = require("jwt-decode");
 const { string } = require("#utils/index");
 const crypto = require("crypto");
 const { generateRandomString } = require("#services/auth.service");
-const sgMail = require("@sendgrid/mail");
-
-const sendEmail = async (to, from, subject, data, urlPathFile) => {
-  // await sgMail.setApiKey(sendGridAPIKey);
-
-  let pathFile = path.join(__dirname, `../template/${urlPathFile}`);
-  let readFile = fs.readFileSync(pathFile);
-  let template = handlebars.compile(readFile.toString());
-  let text = template(data);
-
-  // const mailOptionsSendGrid = {
-  //   to,
-  //   from,
-  //   subject,
-  //   text
-  // };
-
-  // I used alternatif nodemailer because my account SendGrid temporary has been suspense
-  const mailOptionsNodeMailer = {
-    to: to,
-    subject: subject,
-    html: text,
-  };
-
-  try {
-    // await sgMail.send(mailOptionsSendGrid); // sendGrid
-    await email.send(mailOptionsNodeMailer); // nodemailer
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const uploadAWS = async (file, path) => {
-  let filenameFormatted = "";
-  const extension = file.name.split(".");
-  const ext =
-    extension.length > 1 ? "." + extension[extension.length - 1] : "";
-  filenameFormatted = `${new Date() / 1}${ext}`;
-
-  if (!file)
-    return helper.errorHelper(req, res, 400, {
-      success: false,
-      message: `Empty File`,
-    });
-
-  try {
-    // upload to s3
-    const upload = await s3.put(file.tempFilePath, `${path}/${filenameFormatted}`);
-    if (upload.status == false) {
-      return helper.errorHelper(req, res, 400, {
-        success: false,
-        message: upload.message,
-      });
-    }
-    return { filenameFormatted, upload }
-
-  } catch (error) {
-    console.error(error);
-    return error;
-  }
-};
 
 const changePassword = async (req, res) => {
   try {
@@ -83,14 +19,16 @@ const changePassword = async (req, res) => {
     const oldUser = await authModel.signIn(email);
 
     if (!oldUser)
-      return helper.successHelper(req, res, 400, {
+      return helper.errorHelper(req, res, 400, {
+        statusCode: 400,
         success: false,
         message: "Login failed",
       });
 
     const isPasswordCorrect = await bcrypt.compare(oldPassword, oldUser.password);
     if (!isPasswordCorrect)
-      return helper.successHelper(req, res, 400, {
+      return helper.errorHelper(req, res, 400, {
+        statusCode: 400,
         success: false,
         message: "Old password wrong",
       });
@@ -114,9 +52,11 @@ const changePassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const mail = req.body.email;
-    const user = await authModel.signInByToken(mail);
+    const selectTable = await genFuncController.tableSelect(1);
+    const condition = { where: selectTable.cols[2], value: mail };
+    const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
 
-    if (!user) {
+    if (!selectUser) {
       throw new Error("USER_NOT_FOUND");
     }
     const timestamp = new Date().getTime().toString();
@@ -126,10 +66,10 @@ const resetPassword = async (req, res) => {
 
     const resetPasswordLink = `${frontendUrl}/newPassword/${code}`;
     let data = {
-      name: user.usr_name,
+      name: selectUser.usr_name,
       resetPasswordLink: resetPasswordLink,
     };
-    await sendEmail(user.usr_email, emailTesting, 'Reset Password AVL', data, "recoverAccountProcess.hbs");
+    await genFuncController.sendEmail(selectUser.usr_email, emailTesting, 'Reset Password AVL', data, "recoverAccountProcess.hbs");
 
     const payload = {
       code,
@@ -157,7 +97,6 @@ const resetPassword = async (req, res) => {
     return helper.errorHelper(req, res, 500, undefined, error);
   }
 };
-
 
 const createNewPassword = async (req, res) => {
   try {
@@ -227,7 +166,7 @@ const createNewPassword = async (req, res) => {
       name: user[0]?.usr_name,
       date: new Date().toLocaleString()
     };
-    await sendEmail(userByToken.email, emailTesting, 'Create New Password AVL', data, "recoverAccountSuccess.hbs");
+    await genFuncController.sendEmail(userByToken.email, emailTesting, 'Create New Password AVL', data, "recoverAccountSuccess.hbs");
 
 
     return helper.successHelper(req, res, 200, {
@@ -246,17 +185,17 @@ const verifySignUp = async (params, token) => {
     params: params,
     verifyLink
   };
-  await sendEmail(to, emailTesting, 'Verification Registration', data, "verifySignUp.hbs");
+  await genFuncController.sendEmail(to, emailTesting, 'Verification Registration', data, "verifySignUp.hbs");
 };
 
 const signin = async (req, res) => {
   const { email, password } = req.body;
   try {
     const oldUser = await authModel.signIn(email);
-    console.log("oldUser =====", oldUser);
 
     if (!oldUser)
-      return helper.successHelper(req, res, 400, {
+      return helper.errorHelper(req, res, 400, {
+        statusCode: 400,
         success: false,
         message: "Login failed",
       });
@@ -264,15 +203,19 @@ const signin = async (req, res) => {
     const isPasswordCorrect = await bcrypt.compare(password, oldUser.password);
 
     if (!isPasswordCorrect)
-      return helper.successHelper(req, res, 400, {
+      return helper.errorHelper(req, res, 400, {
+        statusCode: 400,
         success: false,
         message: "Your password wrong",
       });
 
-    await authModel.sessionChange("Active", email)
+    await genFuncModel.sessionChange("Active", email)
 
-    const checkUserHistory = await authModel.checkUserHistory(email);
-    let totalLogin = checkUserHistory?.usrh_total_login;
+    const selectTable = await genFuncController.tableSelect(2);
+    const condition = { where: selectTable.cols[2], value: email };
+    const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
+
+    let totalLogin = selectUser?.usrh_total_login;
 
     await authModel.signInHistory(
       {
@@ -314,7 +257,7 @@ const signin = async (req, res) => {
 const signOut = async (req, res) => {
   const { email } = req.body;
   try {
-    await authModel.sessionChange("Destroy", email);
+    await genFuncModel.sessionChange("Destroy", email);
 
     return helper.successHelper(req, res, 200, {
       success: true,
@@ -330,20 +273,28 @@ const signup = async (req, res) => {
   try {
     if (string.isEmpty(email))
       return helper.errorHelper(req, res, 400, {
+        statusCode: 400,
         success: false,
         message: `Empty Email`,
       });
-    const oldUser = await authModel.signInByToken(email);
 
-    if (oldUser)
-      return res.status(400).json({ message: "User already exists" });
+    const selectTable = await genFuncController.tableSelect(1);
+    const condition = { where: selectTable.cols[2], value: email };
+    const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
+
+    if (selectUser)
+      return helper.errorHelper(req, res, 400, {
+        statusCode: 400,
+        success: false,
+        message: `User already exists`,
+      });
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // aws
     const file = req.files.file;
     const path = "user"
-    const uploadAws = await uploadAWS(file, path)
+    const uploadAws = await genFuncController.uploadAWS(file, path)
     // end aws
 
     let params = {
@@ -355,9 +306,10 @@ const signup = async (req, res) => {
       file: uploadAws?.filenameFormatted,
     };
     await authModel.signUp(params);
-    const result = await authModel.signInByToken(email);
 
-    const userToken = await authService.signToken(result, 30);
+    const userSignUp = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
+
+    const userToken = await authService.signToken(userSignUp, 30);
     await verifySignUp(params, userToken);
 
     return helper.successHelper(req, res, 200, {
@@ -372,9 +324,12 @@ const signup = async (req, res) => {
 const verifyReg = async (req, res) => {
   const token = decode(req.query.token);
   try {
-    const findUser = await authModel.signInByToken(token.usr_email);
-    const emailUser = findUser.usr_email;
-    if (findUser) await authModel.activeUser(emailUser);
+    const selectTable = await genFuncController.tableSelect(1);
+    const condition = { where: selectTable.cols[2], value: token.usr_email };
+    const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
+
+    const emailUser = selectUser.usr_email;
+    if (selectUser) await authModel.activeUser(emailUser);
 
     return helper.successHelper(req, res, 200, {
       success: true,
@@ -387,7 +342,8 @@ const verifyReg = async (req, res) => {
 
 module.exports = {
   changePassword,
-  resetPassword, createNewPassword,
+  resetPassword,
+  createNewPassword,
   verifySignUp,
   signin,
   signOut,
