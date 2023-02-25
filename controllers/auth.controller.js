@@ -53,8 +53,7 @@ const resetPassword = async (req, res) => {
   try {
     const mail = req.body.email;
     const selectTable = await genFuncController.tableSelect(1);
-    const [usr_id, usr_name, usr_email] = [...selectTable.cols]
-    const condition = { where: usr_email, value: mail };
+    const condition = { where: selectTable?.colsObj?.usr_email, value: mail };
     const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
 
     if (!selectUser) {
@@ -213,8 +212,7 @@ const signin = async (req, res) => {
     await genFuncModel.sessionChange("Active", email)
 
     const selectTable = await genFuncController.tableSelect(2);
-    const [usrh_id, usrh_total_login, usrh_email] = [...selectTable.cols];
-    const condition = { where: usrh_email, value: email };
+    const condition = { where: selectTable?.colsObj?.usrh_email, value: email };
     const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
 
     let totalLogin = selectUser?.usrh_total_login;
@@ -229,7 +227,6 @@ const signin = async (req, res) => {
       {
         email: oldUser.email,
         name: oldUser.name,
-        user_id: oldUser.user_id,
         type: oldUser.type,
         imageUrl: oldUser.file,
       },
@@ -281,8 +278,7 @@ const signup = async (req, res) => {
       });
 
     const selectTable = await genFuncController.tableSelect(1);
-    const [usr_id, usr_name, usr_email] = [...selectTable.cols]
-    const condition = { where: usr_email, value: email };
+    const condition = { where: selectTable?.colsObj?.usr_email, value: email };
     const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
 
     if (selectUser)
@@ -328,8 +324,7 @@ const verifyReg = async (req, res) => {
   const token = decode(req.query.token);
   try {
     const selectTable = await genFuncController.tableSelect(1);
-    const [usr_id, usr_name, usr_email] = [...selectTable.cols]
-    const condition = { where: usr_email, value: token.usr_email };
+    const condition = { where: selectTable?.colsObj?.usr_email, value: token.usr_email };
     const selectUser = await genFuncModel.dataSelect(selectTable.tableName, selectTable.cols, condition);
 
     const emailUser = selectUser.usr_email;

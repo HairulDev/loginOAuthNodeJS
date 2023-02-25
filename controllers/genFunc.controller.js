@@ -6,24 +6,14 @@ const handlebars = require("handlebars");
 const path = require("path");
 const fs = require("fs");
 const s3 = require("#lib/s3");
-const sgMail = require("@sendgrid/mail");
 
 const sendEmail = async (to, from, subject, data, urlPathFile) => {
-  // await sgMail.setApiKey(sendGridAPIKey);
 
   let pathFile = path.join(__dirname, `../template/${urlPathFile}`);
   let readFile = fs.readFileSync(pathFile);
   let template = handlebars.compile(readFile.toString());
   let text = template(data);
 
-  // const mailOptionsSendGrid = {
-  //   to,
-  //   from,
-  //   subject,
-  //   text
-  // };
-
-  // I used alternatif nodemailer because my account SendGrid temporary has been suspense
   const mailOptionsNodeMailer = {
     to: to,
     subject: subject,
@@ -31,7 +21,6 @@ const sendEmail = async (to, from, subject, data, urlPathFile) => {
   };
 
   try {
-    // await sgMail.send(mailOptionsSendGrid); // sendGrid
     await email.send(mailOptionsNodeMailer); // nodemailer
   } catch (error) {
     console.error(error);
@@ -68,13 +57,22 @@ const uploadAWS = async (file, path) => {
   }
 };
 
+const convertArrayToObject = (arr) => {
+  const obj = {};
+  for (let i = 0; i < arr.length; i++) {
+    obj[arr[i]] = arr[i];
+  }
+  return obj;
+}
+
 const tableSelect = async (tableId) => {
   try {
     const tableSelect = await genFuncModel.tableSelect(tableId);
     if (tableSelect) {
-      const tableName = tableSelect?.tbl_name;
-      const cols = tableSelect?.tbl_column_name.split(", ");
-      return { tableName, cols };
+      const tableName = tableSelect?.mpa_code;
+      let cols = tableSelect?.mpa_paramtext.split(", ");
+      let colsObj = convertArrayToObject(cols)
+      return { tableName, cols, colsObj };
     }
     return ""
   } catch (error) {
@@ -87,4 +85,5 @@ module.exports = {
   sendEmail,
   uploadAWS,
   tableSelect,
+  convertArrayToObject,
 };

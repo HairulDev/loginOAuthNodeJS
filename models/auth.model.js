@@ -27,7 +27,6 @@ const signInHistory = (params) => {
 
     if (select.length === 0) {
       await knex.transaction((trx) => {
-        console.log("masuk ke ======= insert");
         knex("user_login_history")
           // .returning(["*"]) /// for mssql
           .insert({
@@ -46,7 +45,6 @@ const signInHistory = (params) => {
           });
       }); // end knex
     } else if (select.length == 1) {
-      console.log("masuk ke ======= update");
       await knex.transaction((trx) => {
         knex("user_login_history")
           .transacting(trx)

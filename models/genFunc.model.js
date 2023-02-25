@@ -1,5 +1,6 @@
 const knex = require("#config/database");
 const { dateLocalISOString } = require("#lib/helper");
+const { string } = require("#utils/index");
 
 
 const sessionChange = (actived, params) => {
@@ -64,21 +65,49 @@ const sessionChange = (actived, params) => {
 };
 
 const tableSelect = (id) => {
-  return knex("table_select")
-    .where("id", id)
+  return knex("master_param")
+    .where("mpa_id", id)
     .first();
 };
 
-const dataSelect = (table, cols, condition) => {
+const dataSelect = (table, cols, condition, ignoreCols) => {
+  let select;
+  if (!string.isEmpty(ignoreCols)) {
+    select = cols.filter(col => !ignoreCols.includes(col))
+  } else if (string.isEmpty(ignoreCols)) {
+    select = cols
+  }
+
   const { where, value } = condition;
-  return knex(table)
-    .select(cols)
-    .where(`${where}`, `${value}`)
-    .first();
+  if (!string.isEmpty(where || value)) {
+    return knex(table)
+      .select(select)
+      .where(`${where}`, `${value}`)
+      .first();
+  } else {
+    return knex(table)
+      .select(select)
+  }
+};
+
+const dataCount = (table, cols, condition, count) => {
+  const { where, value } = condition;
+  const { col, as } = count;
+  if (!string.isEmpty(where || value)) {
+    return knex(table)
+      .where(`${where}`, value)
+      .count(`${col}`, { as: `${as}` })
+      .first()
+  } else {
+    return knex(table)
+      .count(`${col}`, { as: `${as}` })
+      .first()
+  }
 };
 
 module.exports = {
   tableSelect,
   dataSelect,
+  dataCount,
   sessionChange,
 };
